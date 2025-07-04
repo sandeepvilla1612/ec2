@@ -26,7 +26,7 @@ jobs:
           --count 1 \
           --instance-type ${{ secrets.EC2_INSTANCE_TYPE || 't2.micro' }} \
           --key-name ${{ secrets.EC2_KEY_NAME }} \
-          --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=GitHubEC2}]' \
+          --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=sandeep}]' \
           --query 'Instances[0].InstanceId' --output text)
 
         echo "INSTANCE_ID=$INSTANCE_ID" >> $GITHUB_ENV
