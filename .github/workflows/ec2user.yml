@@ -26,7 +26,7 @@ jobs:
         INSTANCE_ID=$(aws ec2 run-instances \
           --image-id ami-0f918f7e67a3323f0 \
           --instance-type t2.micro \
-          --key-name MyKeyPair \
+          --key-name my-keypair-mumbai \
           --security-groups default \
           --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=krishna}]' \
           --query 'Instances[0].InstanceId' \
