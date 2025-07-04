@@ -41,7 +41,8 @@ jobs:
 
     - name: Save SSH Key
       run: |
-        echo "${{ secrets.EC2_KEY_PAIR_PEM }}" | base64 -d > ec2-key.pem
+        echo "${{ secrets.EC2_KEY_PAIR_PEM }}" > ec2-key.pem
+
         chmod 400 ec2-key.pem
 
     - name: Create IAM User 'vunathi' from EC2
