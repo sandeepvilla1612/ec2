@@ -12,7 +12,7 @@ jobs:
       uses: actions/checkout@v3
 
     - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v3
+      uses: aws-actions/configure-aws-credentials@v4
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -24,14 +24,15 @@ jobs:
         INSTANCE_ID=$(aws ec2 run-instances \
           --image-id ${{ secrets.AMI_ID }} \
           --count 1 \
-          --instance-type ${{ secrets.EC2_INSTANCE_TYPE || 't2.micro' }} \
+          --instance-type t2.micro \
           --key-name ${{ secrets.EC2_KEY_NAME }} \
+          --security-groups ${{ secrets.SECURITY_GROUP_NAME }} \
           --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=sandeep}]' \
           --query 'Instances[0].InstanceId' --output text)
 
         echo "INSTANCE_ID=$INSTANCE_ID" >> $GITHUB_ENV
 
-        echo "Waiting for EC2 instance to be in running state..."
+        echo "Waiting for EC2 instance to be running..."
         aws ec2 wait instance-running --instance-ids $INSTANCE_ID
 
         PUBLIC_IP=$(aws ec2 describe-instances --instance-ids $INSTANCE_ID \
@@ -42,14 +43,21 @@ jobs:
     - name: Save SSH Key
       run: |
         echo "${{ secrets.EC2_KEY_PAIR_PEM }}" > ec2-key.pem
-
         chmod 400 ec2-key.pem
+
+    - name: Test SSH Connectivity
+      run: |
+        echo "Pinging EC2 instance..."
+        ping -c 3 ${{ env.EC2_PUBLIC_IP }} || echo "Ping failed"
+
+        echo "Testing port 22 connectivity..."
+        nc -zv ${{ env.EC2_PUBLIC_IP }} 22 || echo "Port 22 unreachable"
 
     - name: Create IAM User 'vunathi' from EC2
       run: |
-        ssh -o StrictHostKeyChecking=no -i ec2-key.pem ec2-user@${{ env.EC2_PUBLIC_IP }} << 'EOF'
+        ssh -tt -o StrictHostKeyChecking=no -i ec2-key.pem ec2-user@${{ env.EC2_PUBLIC_IP }} << 'EOF'
           echo "Installing AWS CLI..."
-          sudo yum install -y awscli
+          sudo yum install -y awscli || sudo apt update && sudo apt install -y awscli
 
           IAM_USER="vunathi"
           echo "Creating IAM user: \$IAM_USER"
@@ -67,5 +75,5 @@ jobs:
     - name: Terminate EC2 Instance (Cleanup)
       run: |
         aws ec2 terminate-instances --instance-ids ${{ env.INSTANCE_ID }}
-        echo "Waiting for EC2 to terminate..."
+        echo "Waiting for EC2 termination..."
         aws ec2 wait instance-terminated --instance-ids ${{ env.INSTANCE_ID }}
