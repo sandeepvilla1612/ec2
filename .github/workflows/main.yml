@@ -1,0 +1,30 @@
+name: Launch EC2 Instance from GitHub Actions
+
+on:
+  workflow_dispatch:
+
+jobs:
+  launch-ec2:
+    name: srikrishna
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION || 'ap-south-1' }}
+
+      - name: Launch EC2 Instance
+        run: |
+          aws ec2 run-instances \
+            --image-id ami-0c55b159cbfafe1f0 \
+            --count 1 \
+            --instance-type t2.micro \
+            --key-name my-keypair-mumbai \
+            --security-groups default \
+            --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=From-GitHub-Actions}]'
