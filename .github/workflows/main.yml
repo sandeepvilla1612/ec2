@@ -22,7 +22,7 @@ jobs:
       - name: Launch EC2 Instance
         run: |
           aws ec2 run-instances \
-            --image-id ami-0c55b159cbfafe1f0 \
+            --image-id ami-0f918f7e67a3323f0 \
             --count 1 \
             --instance-type t2.micro \
             --key-name my-keypair-mumbai \
